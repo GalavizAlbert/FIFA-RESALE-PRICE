@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Excel Data Viewer</title>
+  <!-- Load PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>My Excel Data</h1>
+  <table id="data-table" border="1"></table>
+
+  <!-- 👇 Place your Papa.parse call here -->
+  <script>
+    Papa.parse("match_prices.csv", {   // make sure the file is named match_prices.csv
+      download: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        let table = document.getElementById("data-table");
+        results.data.forEach((row, i) => {
+          let tr = document.createElement("tr");
+          row.forEach(cell => {
+            let td = document.createElement(i === 0 ? "th" : "td"); // first row as header
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
