@@ -3,28 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <title>Excel Data Viewer</title>
-  <!-- Load PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+
+header {
+  background: linear-gradient(90deg, #039403, #0059b3); /* deep FIFA blues */
+  color: white;
+  padding: 15px 20px;
+  text-align: center;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+header h1 {
+  margin: 0;
+  font-size: 2em;
+  letter-spacing: 1px;
+}
+header .subtitle {
+  margin: 0;
+  font-size: 1.1em;
+  opacity: 0.85;
+}
+
+header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0;
+}
+header .subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1em;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* Light Blue */
+.match-M1,  .match-M3,  .match-M5,  .match-M7,  .match-M9,
+.match-M11, .match-M13, .match-M15, .match-M17, .match-M19,
+.match-M21, .match-M23, .match-M25, .match-M27, .match-M29,
+.match-M31, .match-M33, .match-M35, .match-M37, .match-M39,
+.match-M41, .match-M43, .match-M45, .match-M47, .match-M49,
+.match-M51, .match-M53, .match-M55, .match-M57, .match-M59,
+.match-M61, .match-M63, .match-M65, .match-M67, .match-M69,
+.match-M71, .match-M73, .match-M75, .match-M77, .match-M79,
+.match-M81, .match-M83, .match-M85, .match-M87, .match-M89,
+.match-M91, .match-M93, .match-M95, .match-M97, .match-M99,
+.match-M101, .match-M103 {
+  background-color: #d1edfa; /* light blue */
+}
+
+/* Light Grey */
+.match-M2,  .match-M4,  .match-M6,  .match-M8,  .match-M10,
+.match-M12, .match-M14, .match-M16, .match-M18, .match-M20,
+.match-M22, .match-M24, .match-M26, .match-M28, .match-M30,
+.match-M32, .match-M34, .match-M36, .match-M38, .match-M40,
+.match-M42, .match-M44, .match-M46, .match-M48, .match-M50,
+.match-M52, .match-M54, .match-M56, .match-M58, .match-M60,
+.match-M62, .match-M64, .match-M66, .match-M68, .match-M70,
+.match-M72, .match-M74, .match-M76, .match-M78, .match-M80,
+.match-M82, .match-M84, .match-M86, .match-M88, .match-M90,
+.match-M92, .match-M94, .match-M96, .match-M98, .match-M100,
+.match-M102, .match-M104 {
+  background-color: #ffffff; /* light grey */
+}
+
+
+    
+
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    #filter-container { margin-bottom: 10px; }
+    #matchFilter { padding: 6px; width: 200px; }
+  </style>
 </head>
 <body>
-  <h1>My Excel Data</h1>
-  <table id="data-table" border="1"></table>
+<header>
+  <h1>FIFA RESALE PRICE TRACKER</h1>
+  <p class="subtitle">MEXICANOS AL MUNDIAL 2026</p>
+</header>
 
-  <!-- 👇 Place your Papa.parse call here -->
+  <div id="filter-container">
+    <label for="matchFilter">Search by Match: </label>
+    <input type="text" id="matchFilter" placeholder="Type match code (e.g. M1)">
+  </div>
+  <table id="data-table"></table>
+
   <script>
-    Papa.parse("match_prices.csv", {   // make sure the file is named match_prices.csv
+    Papa.parse("match_prices.csv", {
       download: true,
       skipEmptyLines: true,
       complete: function(results) {
-        let table = document.getElementById("data-table");
-        results.data.forEach((row, i) => {
-          let tr = document.createElement("tr");
+        const rows = results.data.filter(r => r.some(c => String(c).trim() !== ""));
+        const headers = rows[0];
+        const dataRows = rows.slice(1);
+
+        const table = document.getElementById("data-table");
+
+        // Build header
+        const thead = document.createElement("thead");
+        const trHead = document.createElement("tr");
+        headers.forEach(h => {
+          const th = document.createElement("th");
+          th.textContent = h.trim();
+          trHead.appendChild(th);
+        });
+        thead.appendChild(trHead);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        table.appendChild(tbody);
+
+        // Build body
+        dataRows.forEach(row => {
+          const tr = document.createElement("tr");
+
+          // 🎨 Apply color class based on Match column (index 0)
+          const match = String(row[0]).trim();
+          tr.classList.add("match-" + match); // e.g. match-M1
+
           row.forEach(cell => {
-            let td = document.createElement(i === 0 ? "th" : "td"); // first row as header
+            const td = document.createElement("td");
             td.textContent = cell;
             tr.appendChild(td);
           });
-          table.appendChild(tr);
+          tbody.appendChild(tr);
+        });
+
+        // 🔎 Live search filter by Match
+        const matchFilter = document.getElementById("matchFilter");
+        matchFilter.addEventListener("input", function() {
+          const query = this.value.trim().toLowerCase();
+          Array.from(tbody.rows).forEach(row => {
+            const matchVal = row.cells[0].textContent.toLowerCase();
+            if (query === "" || matchVal.includes(query)) {
+              row.style.display = "";
+            } else {
+              row.style.display = "none";
+            }
+          });
         });
       }
     });
