@@ -136,10 +136,10 @@ Papa.parse("match_prices.csv", {
 
     const table = document.getElementById("data-table");
 
-    // Build header
+    // Build header with % Change column
     const thead = document.createElement("thead");
     const trHead = document.createElement("tr");
-    headers.forEach(h => {
+    [...headers, "% Change"].forEach(h => {
       const th = document.createElement("th");
       th.textContent = h.trim();
       trHead.appendChild(th);
@@ -150,45 +150,67 @@ Papa.parse("match_prices.csv", {
     const tbody = document.createElement("tbody");
     table.appendChild(tbody);
 
-    // Build body
+    // Group by Match + CategoryNumber
+    const groups = {};
     dataRows.forEach(row => {
-      const tr = document.createElement("tr");
-
-      // 🎨 Apply color class based on Match column (index 0)
       const match = String(row[0]).trim();
-      tr.classList.add("match-" + match); // e.g. match-M1
+      const categoryNum = String(row[1]).trim();
+      const categoryName = String(row[2]).trim();
+      const price = parseFloat(row[3].replace(/[^0-9.]/g, "")); // strip $ and commas
+      const date = new Date(row[4].trim());
 
-      row.forEach((cell, colIdx) => {
+      if (!match || isNaN(price) || isNaN(date.getTime())) return;
+
+      const key = match + "|" + categoryNum;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ match, categoryNum, categoryName, price, date, row });
+    });
+
+    // Process each group
+    Object.values(groups).forEach(records => {
+      records.sort((a, b) => a.date - b.date);
+      const first = records[0];
+      const last = records[records.length - 1];
+
+      const pctChange = ((last.price - first.price) / first.price * 100).toFixed(1);
+
+      // Build row for latest record
+      const tr = document.createElement("tr");
+      tr.classList.add("match-" + last.match);
+
+      last.row.forEach((cell, colIdx) => {
         const td = document.createElement("td");
-
-        // 🎯 Add Mexico flag emoji for specific matches
-        if (colIdx === 0) { // Match column
-          const matchVal = String(cell).trim();
-          if (["M1", "M28", "M53", "M79", "M92"].includes(matchVal)) {
-            td.textContent = matchVal + " 🇲🇽";
+        if (colIdx === 0) {
+          // Match column with flag logic
+          if (["M1","M28","M53","M79","M92"].includes(last.match)) {
+            td.textContent = last.match + " 🇲🇽";
           } else {
-            td.textContent = matchVal;
+            td.textContent = last.match;
           }
         } else {
-          td.textContent = cell;
+          td.textContent = String(cell).trim();
         }
-
         tr.appendChild(td);
       });
+
+      // Add % Change column
+      const tdChange = document.createElement("td");
+      tdChange.textContent = pctChange + "%";
+      tdChange.style.color = pctChange >= 0 ? "red" : "green";
+      tr.appendChild(tdChange);
+
       tbody.appendChild(tr);
     });
 
+
+    
     // 🔎 Live search filter by Match
     const matchFilter = document.getElementById("matchFilter");
     matchFilter.addEventListener("input", function() {
       const query = this.value.trim().toLowerCase();
       Array.from(tbody.rows).forEach(row => {
         const matchVal = row.cells[0].textContent.toLowerCase();
-        if (query === "" || matchVal.includes(query)) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
+        row.style.display = (query === "" || matchVal.includes(query)) ? "" : "none";
       });
     });
   }
