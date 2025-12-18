@@ -5,7 +5,6 @@
   <title>Excel Data Viewer</title>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-
 header {
   background: linear-gradient(90deg, #039403, #0059b3); /* deep FIFA blues */
   color: white;
@@ -15,17 +14,6 @@ header {
   margin-bottom: 15px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
-header h1 {
-  margin: 0;
-  font-size: 2em;
-  letter-spacing: 1px;
-}
-header .subtitle {
-  margin: 0;
-  font-size: 1.1em;
-  opacity: 0.85;
-}
-
 header h1 {
   font-family: 'Montserrat', sans-serif;
   font-size: 2.2em;
@@ -38,6 +26,45 @@ header .subtitle {
   font-size: 1.1em;
   font-weight: 400;
   opacity: 0.85;
+  margin: 0;
+}
+
+header {
+  background: linear-gradient(90deg, #c9f7c9, #f6c6c6);
+  color: rgb(10, 9, 9);
+  padding: 15px 20px;
+  display: flex;              /* flexbox layout */
+  align-items: center;        /* vertical centering */
+  justify-content: space-between; /* logos left/right, text centered */
+  border-radius: 6px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+header .header-text {
+  text-align: center;
+  flex: 1;                    /* take available space */
+}
+
+header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+header .subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1em;
+  font-weight: 400;
+  opacity: 0.85;
+  margin: 0;
+}
+
+header .logo {
+  height: 50px;
+  width: auto;
 }
 
 /* Light Blue */
@@ -70,84 +97,126 @@ header .subtitle {
   background-color: #ffffff; /* light grey */
 }
 
+/* Mexico highlight */
+.match-M1, .match-M28, .match-M53, .match-M79, .match-M92 {
+  background-color: #c6f6bb; /* light green tint */
+}
 
-    
-
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
-    th { background: #f4f4f4; }
-    #filter-container { margin-bottom: 10px; }
-    #matchFilter { padding: 6px; width: 200px; }
+table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+th { background: #f4f4f4; }
+#filter-container { margin-bottom: 10px; }
+#matchFilter { padding: 6px; width: 200px; }
   </style>
 </head>
 <body>
 <header>
-  <h1>FIFA RESALE PRICE TRACKER</h1>
-  <p class="subtitle">MEXICANOS AL MUNDIAL 2026</p>
+  <img src="mexico-logo.png" alt="Mexico Logo" class="logo left-logo">
+  <div class="header-text">
+    <h1>FIFA RESALE PRICE TRACKER</h1>
+    <p class="subtitle">MEXICANOS AL MUNDIAL 2026</p>
+  </div>
+  <img src="mexico-logo.png" alt="Mexico Logo" class="logo right-logo">
 </header>
 
-  <div id="filter-container">
-    <label for="matchFilter">Search by Match: </label>
-    <input type="text" id="matchFilter" placeholder="Type match code (e.g. M1)">
-  </div>
-  <table id="data-table"></table>
+<div id="filter-container">
+  <label for="matchFilter">Search by Match: </label>
+  <input type="text" id="matchFilter" placeholder="Type match code (e.g. M1)">
+</div>
+<table id="data-table"></table>
 
-  <script>
-    Papa.parse("match_prices.csv", {
-      download: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        const rows = results.data.filter(r => r.some(c => String(c).trim() !== ""));
-        const headers = rows[0];
-        const dataRows = rows.slice(1);
+<script>
+Papa.parse("match_prices.csv", {
+  download: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+    const rows = results.data.filter(r => r.some(c => String(c).trim() !== ""));
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
 
-        const table = document.getElementById("data-table");
+    const table = document.getElementById("data-table");
 
-        // Build header
-        const thead = document.createElement("thead");
-        const trHead = document.createElement("tr");
-        headers.forEach(h => {
-          const th = document.createElement("th");
-          th.textContent = h.trim();
-          trHead.appendChild(th);
-        });
-        thead.appendChild(trHead);
-        table.appendChild(thead);
-
-        const tbody = document.createElement("tbody");
-        table.appendChild(tbody);
-
-        // Build body
-        dataRows.forEach(row => {
-          const tr = document.createElement("tr");
-
-          // 🎨 Apply color class based on Match column (index 0)
-          const match = String(row[0]).trim();
-          tr.classList.add("match-" + match); // e.g. match-M1
-
-          row.forEach(cell => {
-            const td = document.createElement("td");
-            td.textContent = cell;
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-
-        // 🔎 Live search filter by Match
-        const matchFilter = document.getElementById("matchFilter");
-        matchFilter.addEventListener("input", function() {
-          const query = this.value.trim().toLowerCase();
-          Array.from(tbody.rows).forEach(row => {
-            const matchVal = row.cells[0].textContent.toLowerCase();
-            if (query === "" || matchVal.includes(query)) {
-              row.style.display = "";
-            } else {
-              row.style.display = "none";
-            }
-          });
-        });
-      }
+    // Build header
+    const thead = document.createElement("thead");
+    const trHead = document.createElement("tr");
+    headers.forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h.trim();
+      trHead.appendChild(th);
     });
-  </script>
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+
+    // Build body
+    dataRows.forEach(row => {
+      const tr = document.createElement("tr");
+
+      // 🎨 Apply color class based on Match column (index 0)
+      const match = String(row[0]).trim();
+      tr.classList.add("match-" + match); // e.g. match-M1
+
+      row.forEach((cell, colIdx) => {
+        const td = document.createElement("td");
+
+        // 🎯 Add Mexico flag emoji for specific matches
+        if (colIdx === 0) { // Match column
+          const matchVal = String(cell).trim();
+          if (["M1", "M28", "M53", "M79", "M92"].includes(matchVal)) {
+            td.textContent = matchVal + " 🇲🇽";
+          } else {
+            td.textContent = matchVal;
+          }
+        } else {
+          td.textContent = cell;
+        }
+
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    // 🔎 Live search filter by Match
+    const matchFilter = document.getElementById("matchFilter");
+    matchFilter.addEventListener("input", function() {
+      const query = this.value.trim().toLowerCase();
+      Array.from(tbody.rows).forEach(row => {
+        const matchVal = row.cells[0].textContent.toLowerCase();
+        if (query === "" || matchVal.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  }
+});
+</script>
 </body>
 </html>
+</div>
+  </div>
+  <div
+<head>
+  <!-- Add Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <footer style="
+    background-color:#111;
+    color:white;
+    text-align:center;
+    padding:20px;
+    margin-top:40px;
+    font-size:1.2em;
+    font-weight:500;
+    font-family:'Montserrat', sans-serif;
+    letter-spacing:1px;
+  ">
+    <img src="furytv-logo.png" alt="FuryTV Logo"
+         style="height:40px; width:auto; vertical-align:middle; margin-right:10px;">
+    <span style="vertical-align:middle;">Sponsored by <strong>FuryTV</strong></span>
+  </footer>
+</body>
