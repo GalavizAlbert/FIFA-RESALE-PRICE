@@ -123,6 +123,8 @@ th { background: #f4f4f4; }
   <label for="matchFilter">Search by Match: </label>
   <input type="text" id="matchFilter" placeholder="Type match code (e.g. M1)">
 </div>
+<button id="mexicoFilter">🇲🇽 Mexico Games</button>
+<button id="clearFilter">Show All</button>
 <table id="data-table"></table>
 
 <script>
@@ -130,6 +132,7 @@ Papa.parse("match_prices.csv", {
   download: true,
   skipEmptyLines: true,
   complete: function(results) {
+
     const rows = results.data.filter(r => r.some(c => String(c).trim() !== ""));
     const headers = rows[0];
     const dataRows = rows.slice(1);
@@ -156,7 +159,7 @@ Papa.parse("match_prices.csv", {
       const match = String(row[0]).trim();
       const categoryNum = String(row[1]).trim();
       const categoryName = String(row[2]).trim();
-      const price = parseFloat(row[3].replace(/[^0-9.]/g, "")); // strip $ and commas
+      const price = parseFloat(row[3].replace(/[^0-9.]/g, ""));
       const date = new Date(row[4].trim());
 
       if (!match || isNaN(price) || isNaN(date.getTime())) return;
@@ -174,12 +177,12 @@ Papa.parse("match_prices.csv", {
 
       const pctChange = ((last.price - first.price) / first.price * 100).toFixed(1);
 
-      // Build row for latest record
       const tr = document.createElement("tr");
       tr.classList.add("match-" + last.match);
 
       last.row.forEach((cell, colIdx) => {
         const td = document.createElement("td");
+
         if (colIdx === 0) {
           // Match column with flag logic
           if (["M1","M28","M53","M79","M92"].includes(last.match)) {
@@ -190,21 +193,31 @@ Papa.parse("match_prices.csv", {
         } else {
           td.textContent = String(cell).trim();
         }
+
         tr.appendChild(td);
       });
 
       // Add % Change column
+   // Add % Change column
       const tdChange = document.createElement("td");
       tdChange.textContent = pctChange + "%";
-      tdChange.style.color = pctChange >= 0 ? "red" : "green";
-      tr.appendChild(tdChange);
+      tdChange.style.fontWeight = "bold";
 
+      // ✅ Normalize to a number so 0, 0.0, "0", "0.0", "0.00" all match
+      const numericChange = parseFloat(pctChange);
+
+      // ✅ Color logic
+      if (numericChange === 0) {
+        tdChange.style.color = "grey";
+      } else {
+        tdChange.style.color = numericChange > 0 ? "red" : "green";
+      }
+
+      tr.appendChild(tdChange);
       tbody.appendChild(tr);
     });
 
-
-    
-    // 🔎 Live search filter by Match
+    // ✅ Live search filter by Match
     const matchFilter = document.getElementById("matchFilter");
     matchFilter.addEventListener("input", function() {
       const query = this.value.trim().toLowerCase();
@@ -213,6 +226,30 @@ Papa.parse("match_prices.csv", {
         row.style.display = (query === "" || matchVal.includes(query)) ? "" : "none";
       });
     });
+
+    // ✅ 🇲🇽 Filter only Mexico matches
+document.getElementById("mexicoFilter").addEventListener("click", function () {
+  const mexicoMatches = ["m1", "m28", "m53"]; // add m79, m92 if you want
+
+  Array.from(tbody.rows).forEach(row => {
+    let matchVal = row.cells[0].textContent.toLowerCase();
+
+    // ✅ Remove emoji and extra spaces
+    matchVal = matchVal.replace(/[^a-z0-9]/g, "");
+
+    row.style.display = mexicoMatches.includes(matchVal) ? "" : "none";
+  });
+});
+
+
+    // ✅ 🔄 Clear filter
+    document.getElementById("clearFilter").addEventListener("click", function () {
+      Array.from(tbody.rows).forEach(row => {
+        row.style.display = "";
+      });
+      matchFilter.value = "";
+    });
+
   }
 });
 </script>
@@ -242,4 +279,3 @@ Papa.parse("match_prices.csv", {
     <span style="vertical-align:middle;">Sponsored by <strong>FuryTV</strong></span>
   </footer>
 </body>
-
