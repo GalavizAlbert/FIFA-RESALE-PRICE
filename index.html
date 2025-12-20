@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FIFA RESALE PRICE TRACKER</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- Add Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+header {
+  background: linear-gradient(90deg, #039403, #0059b3); /* deep FIFA blues */
+  color: white;
+  padding: 15px 20px;
+  text-align: center;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0;
+}
+header .subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1em;
+  font-weight: 400;
+  opacity: 0.85;
+  margin: 0;
+}
+
+header {
+    background: linear-gradient(90deg, #bdf7bd, white, #f7b9b9);
+  color: rgb(10, 9, 9);
+  padding: 15px 20px;
+  display: flex;              /* flexbox layout */
+  align-items: center;        /* vertical centering */
+  justify-content: space-between; /* logos left/right, text centered */
+  border-radius: 6px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+header .header-text {
+  text-align: center;
+  flex: 1;                    /* take available space */
+}
+
+header h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+header .subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1em;
+  font-weight: 400;
+  opacity: 0.85;
+  margin: 0;
+}
+
+header .logo {
+  height: 50px;
+  width: auto;
+}
+
+/* Light Blue */
+.match-M1,  .match-M3,  .match-M5,  .match-M7,  .match-M9,
+.match-M11, .match-M13, .match-M15, .match-M17, .match-M19,
+.match-M21, .match-M23, .match-M25, .match-M27, .match-M29,
+.match-M31, .match-M33, .match-M35, .match-M37, .match-M39,
+.match-M41, .match-M43, .match-M45, .match-M47, .match-M49,
+.match-M51, .match-M53, .match-M55, .match-M57, .match-M59,
+.match-M61, .match-M63, .match-M65, .match-M67, .match-M69,
+.match-M71, .match-M73, .match-M75, .match-M77, .match-M79,
+.match-M81, .match-M83, .match-M85, .match-M87, .match-M89,
+.match-M91, .match-M93, .match-M95, .match-M97, .match-M99,
+.match-M101, .match-M103 {
+  background-color: #d1edfa; /* light blue */
+}
+
+/* Light Grey */
+.match-M2,  .match-M4,  .match-M6,  .match-M8,  .match-M10,
+.match-M12, .match-M14, .match-M16, .match-M18, .match-M20,
+.match-M22, .match-M24, .match-M26, .match-M28, .match-M30,
+.match-M32, .match-M34, .match-M36, .match-M38, .match-M40,
+.match-M42, .match-M44, .match-M46, .match-M48, .match-M50,
+.match-M52, .match-M54, .match-M56, .match-M58, .match-M60,
+.match-M62, .match-M64, .match-M66, .match-M68, .match-M70,
+.match-M72, .match-M74, .match-M76, .match-M78, .match-M80,
+.match-M82, .match-M84, .match-M86, .match-M88, .match-M90,
+.match-M92, .match-M94, .match-M96, .match-M98, .match-M100,
+.match-M102, .match-M104 {
+  background-color: #ffffff; /* light grey */
+}
+
+/* Mexico highlight */
+.match-M1, .match-M28, .match-M53 {
+  background-color: #c6f6bb; /* light green tint */
+}
+
+table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+th { background: #f4f4f4; }
+#filter-container { margin-bottom: 10px; }
+#matchFilter { padding: 6px; width: 200px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="mexico-logo.png" alt="Mexico Logo" class="logo left-logo">
+  <div class="header-text">
+    <h1>FIFA RESALE PRICE TRACKER</h1>
+    <p class="subtitle">MEXICANOS AL MUNDIAL 2026</p>
+  </div>
+  <img src="mexico-logo.png" alt="Mexico Logo" class="logo right-logo">
+</header>
+
+<div id="filter-container">
+  <label for="matchFilter">Search by Match: </label>
+  <input type="text" id="matchFilter" placeholder="Type match code (e.g. M1)">
+</div>
+<button id="mexicoFilter">🇲🇽 Mexico Games</button>
+<button id="clearFilter">Show All</button>
+<table id="data-table"></table>
+
+<script>
+Papa.parse("match_prices.csv", {
+  download: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+
+    const rows = results.data.filter(r => r.some(c => String(c).trim() !== ""));
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    const table = document.getElementById("data-table");
+
+    // Build header with % Change column
+    const thead = document.createElement("thead");
+    const trHead = document.createElement("tr");
+    [...headers, "% Change"].forEach(h => {
+      const th = document.createElement("th");
+      th.textContent = h.trim();
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+
+    // ✅ Remove duplicate rows before grouping
+    const seen = new Set();
+    const uniqueRows = [];
+
+    dataRows.forEach(row => {
+      const match = String(row[0]).trim();
+      const categoryNum = String(row[1]).trim();
+      const categoryName = String(row[2]).trim();
+      const price = String(row[3]).trim();
+      const date = String(row[4]).trim();
+
+      const key = `${match}|${categoryNum}|${categoryName}|${price}|${date}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueRows.push(row);
+      }
+    });
+
+    // Group by Match + CategoryNumber using unique rows
+    const groups = {};
+    uniqueRows.forEach(row => {
+      const match = String(row[0]).trim();
+      const categoryNum = String(row[1]).trim();
+      const categoryName = String(row[2]).trim();
+      const price = parseFloat(row[3].replace(/[^0-9.]/g, ""));
+      const date = new Date(row[4].trim());
+
+      if (!match || isNaN(price) || isNaN(date.getTime())) return;
+
+      const key = match + "|" + categoryNum;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ match, categoryNum, categoryName, price, date, row });
+    });
+
+    // Process each group
+    Object.values(groups).forEach(records => {
+      records.sort((a, b) => a.date - b.date);
+      const first = records[0];
+      const last = records[records.length - 1];
+
+      const pctChange = ((last.price - first.price) / first.price * 100).toFixed(1);
+
+      const tr = document.createElement("tr");
+      tr.classList.add("match-" + last.match);
+
+      last.row.forEach((cell, colIdx) => {
+        const td = document.createElement("td");
+
+        if (colIdx === 0) {
+          // Match column with flag logic
+          if (["M1","M28","M53","M79","M92"].includes(last.match)) {
+            td.textContent = last.match + " 🇲🇽";
+          } else {
+            td.textContent = last.match;
+          }
+        } else {
+          td.textContent = String(cell).trim();
+        }
+
+        tr.appendChild(td);
+      });
+
+      // Add % Change column
+      const tdChange = document.createElement("td");
+      tdChange.textContent = pctChange + "%";
+      tdChange.style.fontWeight = "bold";
+
+      // Normalize to a number so 0, 0.0, "0", "0.0", "0.00" all match
+      const numericChange = parseFloat(pctChange);
+
+      // Color logic
+      if (numericChange === 0) {
+        tdChange.style.color = "grey";
+      } else {
+        tdChange.style.color = numericChange > 0 ? "red" : "green";
+      }
+
+      tr.appendChild(tdChange);
+      tbody.appendChild(tr);
+    });
+
+    // Live search filter by Match
+    const matchFilter = document.getElementById("matchFilter");
+    matchFilter.addEventListener("input", function() {
+      const query = this.value.trim().toLowerCase();
+      Array.from(tbody.rows).forEach(row => {
+        const matchVal = row.cells[0].textContent.toLowerCase();
+        row.style.display = (query === "" || matchVal.includes(query)) ? "" : "none";
+      });
+    });
+
+    // 🇲🇽 Filter only Mexico matches
+    document.getElementById("mexicoFilter").addEventListener("click", function () {
+      const mexicoMatches = ["m1", "m28", "m53"];
+
+      Array.from(tbody.rows).forEach(row => {
+        let matchVal = row.cells[0].textContent.toLowerCase();
+
+        // Remove emoji and extra spaces
+        matchVal = matchVal.replace(/[^a-z0-9]/g, "");
+
+        row.style.display = mexicoMatches.includes(matchVal) ? "" : "none";
+      });
+    });
+
+    // 🔄 Clear filter
+    document.getElementById("clearFilter").addEventListener("click", function () {
+      Array.from(tbody.rows).forEach(row => {
+        row.style.display = "";
+      });
+      matchFilter.value = "";
+    });
+
+  }
+});
+</script>
+
+<footer style="
+  background-color:#111;
+  color:white;
+  text-align:center;
+  padding:20px;
+  margin-top:40px;
+  font-size:1.2em;
+  font-weight:500;
+  font-family:'Montserrat', sans-serif;
+  letter-spacing:1px;
+">
+  <img src="furytv-logo.png" alt="FuryTV Logo"
+       style="height:40px; width:auto; vertical-align:middle; margin-right:10px;">
+  <span style="vertical-align:middle;">Sponsored by <strong>FuryTV</strong></span>
+</footer>
+
+</body>
+</html>
+
