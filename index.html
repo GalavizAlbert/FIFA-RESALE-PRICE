@@ -210,7 +210,7 @@ Papa.parse("match_prices.csv", {
     });
 
     // Process each group
-        Object.values(groups).forEach(records => {
+    Object.values(groups).forEach(records => {
       records.sort((a, b) => a.date - b.date);
       const first = records[0];
       const last = records[records.length - 1];
@@ -236,14 +236,6 @@ Papa.parse("match_prices.csv", {
 
         tr.appendChild(td);
       });
-      // Add % Change column
-      const tdChange = document.createElement("td");
-      const numericChange = parseFloat(pctChange);
-      tdChange.textContent = pctChange + "%";
-      tr.appendChild(tdChange);
-    
-      tableBody.appendChild(tr);
-    });
 
     // Add % Change column
     const tdChange = document.createElement("td");
@@ -373,6 +365,4 @@ Papa.parse("match_prices.csv", {
 
 </body>
 </html>
-
-
 
