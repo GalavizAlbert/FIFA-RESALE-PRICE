@@ -210,31 +210,21 @@ Papa.parse("match_prices.csv", {
     });
 
     // Process each group
-    Object.values(groups).forEach(records => {
-      // --- NEW: Filter to last 3 days only ---
-      const now = Date.now();
-      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-    
-      const recent = records.filter(r => (now - r.date) <= threeDaysMs);
-    
-      // If not enough data, skip or fallback to full history
-      const usable = recent.length >= 2 ? recent : records;
-    
-      // Continue with your existing logic
-      usable.sort((a, b) => a.date - b.date);
-    
-      const first = usable[0];
-      const last = usable[usable.length - 1];
-    
+        Object.values(groups).forEach(records => {
+      records.sort((a, b) => a.date - b.date);
+      const first = records[0];
+      const last = records[records.length - 1];
+
       const pctChange = ((last.price - first.price) / first.price * 100).toFixed(1);
-    
+
       const tr = document.createElement("tr");
       tr.classList.add("match-" + last.match);
-    
+
       last.row.forEach((cell, colIdx) => {
         const td = document.createElement("td");
-    
+
         if (colIdx === 0) {
+          // Match column with flag logic
           if (["M1","M28","M53","M79","M92"].includes(last.match)) {
             td.textContent = last.match + " 🇲🇽";
           } else {
@@ -243,10 +233,9 @@ Papa.parse("match_prices.csv", {
         } else {
           td.textContent = String(cell).trim();
         }
-    
+
         tr.appendChild(td);
       });
-    
       // Add % Change column
       const tdChange = document.createElement("td");
       const numericChange = parseFloat(pctChange);
@@ -384,5 +373,6 @@ Papa.parse("match_prices.csv", {
 
 </body>
 </html>
+
 
 
